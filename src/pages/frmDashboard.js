@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react'
-import { StyleSheet, TextInput, Text, View, TouchableOpacity } from 'react-native'
+import { StyleSheet, TextInput, Text, View, TouchableOpacity, ScrollView } from 'react-native'
 import { FloatingAction } from 'react-native-floating-action';
 import AuthContext from '../contexts/auth';
 import Keychain from 'react-native-keychain';
@@ -60,19 +60,28 @@ export default function dashboard() {
     try {
       const blockChain = await Axios.get('https://backend-blockchain-chico.herokuapp.com/blockchain', config);
       setData(blockChain.data);
-      console.log(blockChain.data);
     } catch (response) {
       console.log(response.error)
     }
   }
 
   async function addBloco(dado){
-    Axios.post('https://backend-blockchain-chico.herokuapp.com/blockchain', {
-      informacao: dado,
-    }).then((response) => {
-      console.log(response.ds_mensagem);
+    const bodyParameters = {
+      informacao: dado
+   };
+   
+    Axios.post(
+      'https://backend-blockchain-chico.herokuapp.com/blockchain', 
+      bodyParameters,
+      config
+    ).then((response) => {
+      console.log(response.data);
+      if(response.data.ds_mensagem == "Bloco Adicionado"){
+        toggleModal();
+        setRender(!Render);
+      }
     }).catch((response) => {
-      console.log(response.ds_mensagem);
+      console.log(response.data);
     })
   }
 
@@ -97,9 +106,22 @@ export default function dashboard() {
   }, [Render]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.textHeader}>Blockhain:</Text>
-
+    <View style={styles.container}>    
+      <ScrollView style={styles.listaChain}>
+        <View>
+            {
+              blockChainData.blockChain.blocks.map((data) =>{
+                return(
+                    <View style={styles.item}>
+                      <Text style={styles.txtitemPrincipal}>{data.dados.informacao}</Text>
+                      <Text style={styles.txtitemSecundario}>{data.hash}</Text>
+                      <Text style={styles.txtitemSecundario}>{data.hashAnterior}</Text>
+                    </View>
+                  )
+              })
+            }           
+        </View>
+      </ScrollView>
       <Modal onBackdropPress={toggleModal} isVisible={isModalVisible} style={styles.modal}>
           <View style={styles.container}>
 
@@ -110,8 +132,6 @@ export default function dashboard() {
             </TouchableOpacity>
           </View>
       </Modal>
-      
-      
 
       <FloatingAction
         style={styles.floatMenu}
@@ -134,12 +154,13 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#297045',
     width: '100%',
-    height: '100%',
+    height:'100%',
     padding:40,
   },
   textHeader: {
     color: 'white',
     fontSize: 30,
+    marginBottom:'15%'
   },
   floatMenu: {
     zIndex: 3,
@@ -180,5 +201,26 @@ const styles = StyleSheet.create({
   btnTxt:{
     color: 'white',
     fontSize:20,
-},
+  },
+  listaChain:{
+    height:'100%',
+  },
+  item:{
+    width:'100%',
+    height:'8%',
+    marginBottom:'9%',
+    backgroundColor:'#2E933C',
+    elevation:3,
+    padding:15
+  },
+  txtitemPrincipal:{
+    color:'white',
+    fontWeight:'bold',
+    fontSize:15,
+  },
+  txtitemSecundario:{
+    color:'white',
+    fontWeight:'bold',
+    fontSize:8,
+  }
 })
