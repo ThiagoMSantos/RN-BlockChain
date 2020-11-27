@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text, TextInput, ToastAndroid } from 'react-native';
-import Label from '../components/label';
+import { StyleSheet, View, TouchableOpacity, Text, Image, ToastAndroid } from 'react-native';
+import { TextInput, IconButton } from 'react-native-paper';
+import TextInputMask from 'react-native-text-input-mask';
+import validarCpf from 'validar-cpf';
 
 import axios from 'axios';
 
 export default function frmCadastroUsuario({ navigation }) {
 
     const [nome, setNome] = useState('');
+    const [cpf, setCpf] = useState('');
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [confSenha, setConfSenha] = useState('');
@@ -22,39 +25,44 @@ export default function frmCadastroUsuario({ navigation }) {
         }
     }
 
-    const cadastrar = (nome, email, senha, confSenha) => {
-
+    const cadastrar = (nome, cpf, email, senha, confSenha) => {
         if (nome.trim() != '') {
-            if (emailVerify(email) && email.trim() != '') {
-                if (senha == confSenha && senha.trim() != '' && confSenha.trim() != '') {
-                    axios.post('http://bway.anytech.com.br/usuario', {
-                        nomeUsuario: nome,
-                        emailUsuario: email,
-                        senhaUsuario: senha,
-                    }).then(response => {
-                        if (response.data.ic_sucesso = true) {
-                            if (response.data.ds_mensagem == "Usuário criado com sucesso!\\nObrigado por escolher o b-Way!") {
-                                console.log(response.data)
-                                ToastAndroid.show("Usuário criado com sucesso! Obrigado por escolher o b-Way!", ToastAndroid.SHORT);
-                                navigation.navigate('Index');
-                            } else {
-                                ToastAndroid.show("O e-mail desejado já está sendo utilizado por outo usuário. Insira outro e tente novamente.", ToastAndroid.SHORT);
-                            }
+            if (validarCpf(cpf.replace(/\D+/g, ""))){
+                if (emailVerify(email) && email.trim() != '') {
+                    if (senha == confSenha && senha.trim() != '' && confSenha.trim() != '') {
+                        axios.post('https://backend-blockchain-chico.herokuapp.com/auth/register', {
+                            nome: nome,
+                            cpf: cpf,
+                            email: email,
+                            password: senha,
+                        }).then((response) => {
+                            if (response.data.ic_sucesso == true) {
+                                if (response.data.ds_mensagem == "Obrigado por utilizar nossa plataforma!") {
+                                    ToastAndroid.show(response.data.ds_mensagem, ToastAndroid.SHORT);
+                                    navigation.navigate('Index');
+                                } else {
+                                    ToastAndroid.show(response.data.ds_mensagem, ToastAndroid.SHORT);
+                                }
 
-                        }
-                        else if (response.data.ic_sucesso = false) {
-                            ToastAndroid.show(response.data.ds_mensagem, ToastAndroid.SHORT);
-                        }
-                    }).catch(error => {
-                        ToastAndroid.show("Erro ao cadastrar usuário, por favor tente novamente.", ToastAndroid.SHORT);
-                    });
+                            }
+                            else if (response.data.ic_sucesso == false) {
+                                ToastAndroid.show(response.data.ds_mensagem, ToastAndroid.SHORT);
+                            }
+                        }).catch((response) => {
+                            console.log(response);
+                        })
+
+                    }
+                    else {
+                        ToastAndroid.show("Por favor preencher o campo \"Senha\" corretamente! As senhas não coincidem.", ToastAndroid.SHORT);
+                    }
                 }
                 else {
-                    ToastAndroid.show("Por favor preencher o campo \"Senha\" corretamente! As senhas não coincidem.", ToastAndroid.SHORT);
+                    ToastAndroid.show("Por favor preencher o campo \"E-mail\" corretamente!", ToastAndroid.SHORT);
                 }
             }
             else {
-                ToastAndroid.show("Por favor preencher o campo \"E-mail\" corretamente!", ToastAndroid.SHORT);
+                ToastAndroid.show("Por favor preencher o campo \"CPF\" corretamente!", ToastAndroid.SHORT);
             }
         }
         else {
@@ -66,19 +74,73 @@ export default function frmCadastroUsuario({ navigation }) {
     return (
         <View style={styles.container}>
             <View style={styles.frmCadastro}>
-                <TextInput placeholderTextColor="#737373" textContentType='name' placeholder="Nicollas Frazão" name="txtNome" style={styles.txtInput} onChangeText={text => setNome(text.replace(/[^A-zÀ-ú\s]/g, ''))} value={nome} />
+            
+                <Image style={styles.headerLogo} source={require('../img/logo-teste.png')}/>
 
-                <TextInput placeholderTextColor="#737373" textContentType='emailAddress' placeholder="usuario@bway.com.br" name="txtEmail" style={styles.txtInput} onChangeText={text => setEmail(text)} value={email} />
+                <TextInput
+                    left={<TextInput.Icon name='account' color="white"/>}
+                    selectionColor={'white'}
+                    underlineColor={"white"}
+                    mode='flat'
+                    label="Nome"
+                    onChangeText={text => setNome(text.replace(/[^A-zÀ-ú\s]/g, ''))}
+                    value={nome}
+                    style={styles.txtInput}
+                />
 
-                <TextInput placeholderTextColor="#737373" textContentType='password' secureTextEntry={true} placeholder="**************" name="txtSenha" style={styles.txtInput} onChangeText={text => setSenha(text)} value={senha} />
+                <TextInput
+                    left={<TextInput.Icon name='card-account-details' color="white"/>}
+                    selectionColor={'white'}
+                    underlineColor={"white"}
+                    mode='flat'
+                    label="CPF"
+                    onChangeText={text => setCpf(text)} 
+                    value={cpf}
+                    style={styles.txtInput}
+                />
 
-                <TextInput placeholderTextColor="#737373" textContentType='password' secureTextEntry={true} placeholder="**************" name="txtConfSenha" style={styles.txtInput} onChangeText={text => setConfSenha(text)} value={confSenha} />
+                <TextInput
+                    left={<TextInput.Icon name='email' color="white"/>}
+                    selectionColor={'white'}
+                    underlineColor={"white"}
+                    mode='flat'
+                    label="Email"
+                    onChangeText={text => setEmail(text)} 
+                    value={email}
+                    style={styles.txtInput}
+                />
 
-                <View style={{ flexDirection: "row" }}>
-                    <TouchableOpacity onPress={() => { navigation.navigate('Index') }} style={styles.btnVoltar}>{/* "Botão" de envio */}
-                        <Text style={styles.btnTxt}>VOLTAR</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => cadastrar(nome, email, senha, confSenha)} style={styles.btnCadastro}>{/* "Botão" de envio */}
+                <TextInput
+                    left={<TextInput.Icon name='lock' color="white"/>}
+                    selectionColor={'white'}
+                    underlineColor={"white"}
+                    mode='flat'
+                    label="Senha"
+                    onChangeText={text => setSenha(text)} 
+                    value={senha}
+                    style={styles.txtInput}
+                />
+
+                <TextInput
+                    left={<TextInput.Icon name='lock' color="white"/>}
+                    selectionColor={'white'}
+                    underlineColor={"white"}
+                    mode='flat'
+                    label="Confirmar Senha"
+                    onChangeText={text => setConfSenha(text)} 
+                    value={confSenha}
+                    style={styles.txtInput}
+                />
+
+                <View style={{ flexDirection: "row", marginLeft:'auto', marginRight:'auto' }}>
+                <IconButton
+                    icon="arrow-left"
+                    color={'white'}
+                    size={40}
+                    onPress={() => navigation.navigate('Index')}
+                    style={styles.btnVoltar}
+                />
+                    <TouchableOpacity onPress={() => cadastrar(nome, cpf, email, senha, confSenha)} style={styles.btnCadastro}>{/* "Botão" de envio */}
                         <Text style={styles.btnTxt}>CADASTRAR</Text>
                     </TouchableOpacity>
                 </View>
@@ -90,21 +152,22 @@ export default function frmCadastroUsuario({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#ff6404',
-        width: '100%',
-        height: '100%',
+    container:{
+        flex:1,
+        backgroundColor:'#297045',
+        width:'100%',
+        height:'100%',
+        fontFamily:'Century Gothic'
     },
-    frmCadastro: {
-        width: '80%',
-        height: '70%',
-        marginLeft: 'auto',
-        marginRight: 'auto',
-        marginTop: 'auto',
-        marginBottom: 'auto',
-        backgroundColor: 'transparent',
-
+    frmCadastro:{
+        width:'85%',
+        height:'80%',
+        marginLeft:'auto',
+        marginRight:'auto',
+        marginTop:'auto',
+        marginBottom:'auto',
+        backgroundColor:'transparent',
+        fontFamily:'Century Gothic'
     },
     txtInput: {
         marginBottom: '5%',
@@ -117,22 +180,20 @@ const styles = StyleSheet.create({
         elevation: 10,
         paddingHorizontal: 15,
     },
-    btnCadastro: {
-        backgroundColor: '#383838',
-        width: '45%',
-        height: '30%',
-        marginLeft: 'auto',
-        alignItems: 'center',
-        elevation: 24,
-        borderRadius: 4
+    btnCadastro:{
+        backgroundColor: '#2E933C',
+        width: '55%',
+        height: 50,
+        elevation:3,
+        color:'white',
+        borderRadius:50,
+        paddingLeft:'13%',
+        alignSelf:'center',
     },
     btnVoltar: {
-        backgroundColor: '#383838',
-        width: '45%',
-        height: '30%',
-        alignItems: 'center',
-        elevation: 24,
-        borderRadius: 4,
+        backgroundColor: '#2E933C',
+        elevation:3,
+        borderRadius:50,
     },
     btnTxt: {
         marginBottom: "auto",
@@ -141,6 +202,16 @@ const styles = StyleSheet.create({
         fontSize: 17,
         elevation: 3,
         fontFamily: 'Century Gothic'
+    },
+    txtInput:{
+        backgroundColor:'transparent',
+        marginBottom:'5%'
+    },
+    headerLogo:{
+        width:100,
+        height:100,
+        backgroundColor:'transparent',
+        alignSelf:"center",
     },
 
 });

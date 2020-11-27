@@ -53,11 +53,6 @@ export default function Index({ navigation }){
                     <Text style={styles.btnTxt}>ENTRAR</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.lblIndex}>{/* Recuperar senha */}
-                    Esqueceu a senha?{"\n"}
-                    Clique aqui para recupera-la.   
-                </Text>
-
             </View>
 
             <View style={styles.hr}></View>
@@ -72,7 +67,7 @@ export default function Index({ navigation }){
 const styles = StyleSheet.create({
     container:{
         flex:1,
-        backgroundColor:'rgb(112, 0, 152)',
+        backgroundColor:'#297045',
         width:'100%',
         height:'100%',
         fontFamily:'Century Gothic'
@@ -92,7 +87,7 @@ const styles = StyleSheet.create({
         marginBottom:'5%'
     },
     btnLogin:{
-        backgroundColor: 'rgb(112,0,190)',
+        backgroundColor: '#2E933C',
         marginTop:'5%',
         width: '45%',
         height: '11%',
@@ -105,7 +100,7 @@ const styles = StyleSheet.create({
         paddingTop:'4%',
     },
     btnCadastro:{
-        backgroundColor: 'rgb(112,0,190)',
+        backgroundColor: '#2E933C',
         marginBottom:'5%',
         width: '55%',
         height: '8%',
@@ -130,8 +125,8 @@ const styles = StyleSheet.create({
         fontFamily:'Century Gothic'
     },
     headerLogo:{
-        width:100,
-        height:100,
+        width:200,
+        height:200,
         backgroundColor:'transparent',
         alignSelf:"center",
     },

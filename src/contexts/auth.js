@@ -2,18 +2,20 @@ import React, { createContext, useState, useEffect} from 'react';
 import Keychain from 'react-native-keychain';
 import * as Auth from '../services/authLogin';
 
-const AuthContext = createContext({ logado: Boolean, nome:String});
+const AuthContext = createContext({token:String, logado: Boolean, nome:String});
 
 export const AuthProvider = ({ children }) =>{
     
     const [nomeUsuario, setNome] = useState('oi');
     const [logado, setLogado] = useState(Boolean);
+    const [userToken, setToken] = useState('');
 
     function LogIn(email, senha){
         Auth.AuthLogin(email, senha).then( res =>{
             setNome(res.data.usuario.nome);
+            setToken(res.data.token);
             setLogado(true);    
-            Keychain.setGenericPassword(res.data.usuario.nome+"", res.data.usuario.cpf+"");
+            Keychain.setGenericPassword(res.data.token+"", res.data.usuario._id+"");
         });
 
     }
@@ -41,7 +43,7 @@ export const AuthProvider = ({ children }) =>{
     }, []);
 
     return(
-        <AuthContext.Provider value ={{logado, LogIn, nome: nomeUsuario, LogOut}}>
+        <AuthContext.Provider value ={{token:userToken, logado, LogIn, nome: nomeUsuario, LogOut}}>
             {children}
         </AuthContext.Provider>
     )
