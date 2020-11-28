@@ -34,8 +34,11 @@ export default function Index({ navigation }){
                     mode='flat'
                     label="Email"
                     value={email}
-                    onChangeText={text => setEmail(text)} value={email}
+                    color="white"
+                    onChangeText={text => setEmail(text)}
                     style={styles.txtInput}
+                    autoCompleteType="email"
+                    textContentType="emailAddress"
                 /> 
 
                 <TextInput
@@ -45,8 +48,10 @@ export default function Index({ navigation }){
                     mode='flat'
                     label="Senha"
                     value={senha}
-                    onChangeText={text => setSenha(text)} value={senha}
+                    onChangeText={text => setSenha(text)}
                     style={styles.txtInput}
+                    autoCompleteType="password"
+                    secureTextEntry
                 /> 
                 
                 <TouchableOpacity onPress={() => handleSignIn(email, senha)} style={styles.btnLogin}>{/* "Botão" de envio */}
@@ -84,7 +89,8 @@ const styles = StyleSheet.create({
     },
     txtInput:{
         backgroundColor:'transparent',
-        marginBottom:'5%'
+        marginBottom:'5%',
+        color:'white',
     },
     btnLogin:{
         backgroundColor: '#2E933C',

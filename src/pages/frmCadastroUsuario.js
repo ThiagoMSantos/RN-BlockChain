@@ -86,6 +86,7 @@ export default function frmCadastroUsuario({ navigation }) {
                     onChangeText={text => setNome(text.replace(/[^A-zÀ-ú\s]/g, ''))}
                     value={nome}
                     style={styles.txtInput}
+                    autoCompleteType="name"
                 />
 
                 <TextInput
@@ -97,6 +98,12 @@ export default function frmCadastroUsuario({ navigation }) {
                     onChangeText={text => setCpf(text)} 
                     value={cpf}
                     style={styles.txtInput}
+                    render={props =>
+                        <TextInputMask
+                          {...props}
+                          mask="[000].[000].[000]-[00]"
+                        />
+                    }
                 />
 
                 <TextInput
@@ -108,6 +115,8 @@ export default function frmCadastroUsuario({ navigation }) {
                     onChangeText={text => setEmail(text)} 
                     value={email}
                     style={styles.txtInput}
+                    autoCompleteType="email"
+                    textContentType="emailAddress"
                 />
 
                 <TextInput
@@ -119,6 +128,8 @@ export default function frmCadastroUsuario({ navigation }) {
                     onChangeText={text => setSenha(text)} 
                     value={senha}
                     style={styles.txtInput}
+                    autoCompleteType="password"
+                    secureTextEntry
                 />
 
                 <TextInput
@@ -130,6 +141,8 @@ export default function frmCadastroUsuario({ navigation }) {
                     onChangeText={text => setConfSenha(text)} 
                     value={confSenha}
                     style={styles.txtInput}
+                    autoCompleteType="password"
+                    secureTextEntry
                 />
 
                 <View style={{ flexDirection: "row", marginLeft:'auto', marginRight:'auto' }}>
@@ -161,10 +174,9 @@ const styles = StyleSheet.create({
     },
     frmCadastro:{
         width:'85%',
-        height:'80%',
+        height:'100%',
         marginLeft:'auto',
         marginRight:'auto',
-        marginTop:'auto',
         marginBottom:'auto',
         backgroundColor:'transparent',
         fontFamily:'Century Gothic'
@@ -208,8 +220,8 @@ const styles = StyleSheet.create({
         marginBottom:'5%'
     },
     headerLogo:{
-        width:100,
-        height:100,
+        width:200,
+        height:200,
         backgroundColor:'transparent',
         alignSelf:"center",
     },

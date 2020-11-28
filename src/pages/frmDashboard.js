@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react'
-import { StyleSheet, TextInput, Text, View, TouchableOpacity, ScrollView } from 'react-native'
+import { StyleSheet, TextInput, Text, View, TouchableOpacity, ScrollView, ToastAndroid } from 'react-native'
 import { FloatingAction } from 'react-native-floating-action';
 import AuthContext from '../contexts/auth';
 import Keychain from 'react-native-keychain';
@@ -24,15 +24,22 @@ export default function dashboard() {
       {
         text: 'Adicionar Bloco',
         name: 'btnAddBloco',
-        position: 2,
-        icon:require('../img/addBloco.png'),
+        position: 3,
+        icon: require('../img/addBloco.png'),
+        color: '#383838'
+      },
+      {
+        text: 'Validar BlockChain',
+        name: 'btnValidarBlockChain',
+        position: 3,
+        icon: require('../img/check.png'),
         color: '#383838'
       },
       {
         text: "Sair",
         name: "btnSair",
         position: 1,
-        icon:require('../img/logout.png'),
+        icon: require('../img/logout.png'),
         color: '#383838'
       }
     ]
@@ -46,91 +53,113 @@ export default function dashboard() {
     setModalVisible(!isModalVisible);
   };
 
-  const _onAccordionPress = (newExpandedId: string | number) => {
-    expandedId === newExpandedId
-      ? setExpandedId(undefined)
-      : setExpandedId(newExpandedId);
-  }
-
-  const config = {
-    headers: { Authorization: `Bearer ${token}` }
-  };
-
-  async function fetchBlockchain(){
+  async function loadStorageData() {
     try {
-      const blockChain = await Axios.get('https://backend-blockchain-chico.herokuapp.com/blockchain', config);
-      setData(blockChain.data);
-    } catch (response) {
-      console.log(response.error)
+      const credenciais = await Keychain.getGenericPassword();
+      if (credenciais) {
+        setId(credenciais.password);
+        setToken(credenciais.username);
+
+        const config = {
+          headers: { Authorization: 'Bearer ' + credenciais.username }
+        };
+        try {
+          const blockChain = await Axios.get('https://backend-blockchain-chico.herokuapp.com/blockchain', config);
+          setData(blockChain.data);
+        } catch (response) {
+          console.log(response.error)
+        }
+
+      } else {
+        loadStorageData();
+      }
+    } catch (error) {
+      console.log('Keychain couldn\'t be accessed!', error);
     }
   }
 
-  async function addBloco(dado){
+  const config = {
+    headers: { Authorization: 'Bearer ' + token }
+  };
+
+  async function addBloco(dado) {
     const bodyParameters = {
       informacao: dado
-   };
-   
+    };
+
     Axios.post(
-      'https://backend-blockchain-chico.herokuapp.com/blockchain', 
+      'https://backend-blockchain-chico.herokuapp.com/blockchain',
       bodyParameters,
       config
     ).then((response) => {
       console.log(response.data);
-      if(response.data.ds_mensagem == "Bloco Adicionado"){
-        toggleModal();
+      if (response.data.ds_mensagem == "Bloco Adicionado") {
         setRender(!Render);
+        ToastAndroid.show(response.data.ds_mensagem, ToastAndroid.SHORT);
+        toggleModal();
       }
     }).catch((response) => {
       console.log(response.data);
     })
   }
 
-  useEffect(() => {
-    async function loadStorageData() {
-      try {
-        const credenciais = await Keychain.getGenericPassword();
-        if (credenciais) {
-          setId(credenciais.password);
-          setToken(credenciais.username);
-        } else {
-          console.log('No credentials stored')
-        }
-      } catch (error) {
-        console.log('Keychain couldn\'t be accessed!', error);
-      }
-    }
+  async function validaBlockchain() {
 
+    Axios.get(
+      'https://backend-blockchain-chico.herokuapp.com/blockchain/valida',config
+    ).then((response) => {
+      
+      if(response.data.isvalid == true){
+        ToastAndroid.show("A BlockChain está valida! ", ToastAndroid.SHORT);
+      } else if(response.data.isvalid == true){
+        ToastAndroid.show("A BlockChain está invalida! ", ToastAndroid.SHORT);
+      }
+    }).catch((response) => {
+    })
+  }
+
+  const Item = ( data ) => {
+    return (
+      <View style={styles.item}>
+        <Text style={styles.txtitemPrincipal}>{data.dados.informacao}</Text>
+        <Text style={styles.txtitemSecundario}>Hash anteiror: {(data.hashAnterior + '').substr(0, 35) + "..."}</Text>
+        <Text style={styles.txtitemSecundario}>Hash atual: {(data.hash + '').substr(0, 35) + "..."}</Text>
+      </View>
+    );
+  }
+
+  useEffect(() => {
     loadStorageData();
-    fetchBlockchain();
-    fetchBlockchain();
+
+    setTimeout(() => {
+      if (Render == false) {
+        setRender(true);
+      }
+    }, 1000)
+
+    console.log(blockChainData.blockChain)
+    
   }, [Render]);
 
   return (
-    <View style={styles.container}>    
+    <View style={styles.container}>
       <ScrollView style={styles.listaChain}>
         <View>
-            {
-              blockChainData.blockChain.blocks.map((data) =>{
-                return(
-                    <View style={styles.item}>
-                      <Text style={styles.txtitemPrincipal}>{data.dados.informacao}</Text>
-                      <Text style={styles.txtitemSecundario}>{data.hash}</Text>
-                      <Text style={styles.txtitemSecundario}>{data.hashAnterior}</Text>
-                    </View>
-                  )
-              })
-            }           
+          {
+            (Render == true) ? blockChainData.blockChain.blocks.map((data) =>{ return( Item(data) ) }) : null
+          }
+   
         </View>
       </ScrollView>
       <Modal onBackdropPress={toggleModal} isVisible={isModalVisible} style={styles.modal}>
-          <View style={styles.container}>
+        <View style={styles.container}>
 
-            <TextInput placeholderTextColor="#737373" placeholder="Dados" name="txtDados" style={styles.txtInput} onChangeText={text => setDado(text)} value={dado}/>
+          <TextInput placeholderTextColor="#737373" placeholder="Dados" name="txtDados" style={styles.txtInput} onChangeText={text => setDado(text)} value={dado} />
 
-            <TouchableOpacity onPress={() => addBloco(dado)} style={styles.btnConfirmAdd}>{/* "Botão" de envio */}
-              <Text style={styles.btnTxt}>Adicionar</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={() => addBloco(dado)} style={styles.btnConfirmAdd}>{/* "Botão" de envio */}
+            <Text style={styles.btnTxt}>Adicionar</Text>
+          </TouchableOpacity>
+        </View>
       </Modal>
 
       <FloatingAction
@@ -140,8 +169,10 @@ export default function dashboard() {
         onPressItem={nome => {
           if (nome == "btnSair") {
             handleLogOut();
-          } else if (nome == "btnAddBloco"){
+          } else if (nome == "btnAddBloco") {
             toggleModal();
+          } else if (nome == "btnValidarBlockChain") {
+            validaBlockchain();
           }
         }
         }
@@ -154,73 +185,73 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#297045',
     width: '100%',
-    height:'100%',
-    padding:40,
+    height: '100%',
+    padding: 40,
   },
   textHeader: {
     color: 'white',
     fontSize: 30,
-    marginBottom:'15%'
+    marginBottom: '15%'
   },
   floatMenu: {
     zIndex: 3,
   },
-  modal:{
-    flexDirection:'column',
-    width:'80%',
-    maxHeight:200,
-    backgroundColor:'white',
-    marginLeft:'auto',
-    marginRight:'auto',
-    marginTop:'auto',
-    marginBottom:'auto'
+  modal: {
+    flexDirection: 'column',
+    width: '80%',
+    maxHeight: 200,
+    backgroundColor: 'white',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    marginTop: 'auto',
+    marginBottom: 'auto'
   },
-    txtInput:{
-      backgroundColor:'white',
-      borderRadius:6,
-      height:50,
-      fontSize:17,
-      textAlign:"justify",
-      textAlignVertical:"auto",
-      elevation:10,
-      fontFamily:'Century Gothic',
-      paddingHorizontal:15,
-    },
-    btnConfirmAdd:{
-      backgroundColor: '#2E933C',
-      width: '80%',
-      height: 50,
-      elevation:3,
-      color:'white',
-      borderRadius:50,
-      paddingLeft:'24%',
-      paddingTop:'4%',
-      alignSelf:'center',
-      marginTop:'15%',
-  },  
-  btnTxt:{
+  txtInput: {
+    backgroundColor: 'white',
+    borderRadius: 6,
+    height: 50,
+    fontSize: 17,
+    textAlign: "justify",
+    textAlignVertical: "auto",
+    elevation: 10,
+    fontFamily: 'Century Gothic',
+    paddingHorizontal: 15,
+  },
+  btnConfirmAdd: {
+    backgroundColor: '#2E933C',
+    width: '80%',
+    height: 50,
+    elevation: 3,
     color: 'white',
-    fontSize:20,
+    borderRadius: 50,
+    paddingLeft: '24%',
+    paddingTop: '4%',
+    alignSelf: 'center',
+    marginTop: '15%',
   },
-  listaChain:{
-    height:'100%',
+  btnTxt: {
+    color: 'white',
+    fontSize: 20,
   },
-  item:{
-    width:'100%',
-    height:'8%',
-    marginBottom:'9%',
-    backgroundColor:'#2E933C',
-    elevation:3,
-    padding:15
+  listaChain: {
+    height: '100%',
   },
-  txtitemPrincipal:{
-    color:'white',
-    fontWeight:'bold',
-    fontSize:15,
+  item: {
+    width: '100%',
+    height: 80,
+    marginBottom: '5%',
+    backgroundColor: '#2E933C',
+    elevation: 3,
+    padding: 15
   },
-  txtitemSecundario:{
-    color:'white',
-    fontWeight:'bold',
-    fontSize:8,
+  txtitemPrincipal: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  txtitemSecundario: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 10,
   }
 })

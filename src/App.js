@@ -14,6 +14,7 @@ export default function App() {
           ...DefaultTheme.colors,
           primary: 'white',
           placeholder: 'white',
+          text: 'white',
         },
       };
 
